@@ -11,13 +11,17 @@ import {
 } from "lucide-react";
 import {
   activeReports,
+  modeLabels,
+  serviceFor,
   planJourneys,
+  type Direction,
+  type Mode,
   stops,
   stopById,
   type Line,
   type Report,
 } from "../data";
-import { Empty, LineBadge } from "./UI";
+import { Empty, LineBadge, ModeIcon, StatusBadge } from "./UI";
 export default function Journeys({
   lines,
   reports,
@@ -27,13 +31,39 @@ export default function Journeys({
   lines: Line[];
   reports: Report[];
   now: number;
-  onFollow: (id: string, stop: string) => void;
+  onFollow: (id: string, stop: string, direction: Direction) => void;
 }) {
   const [from, setFrom] = useState("barcelone");
   const [to, setTo] = useState("ariana");
   const [query, setQuery] = useState<{ from: string; to: string } | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
-  const journeys = query ? planJourneys(lines, query.from, query.to) : [];
+  const [mode, setMode] = useState<Mode | "all">("all");
+  const availableLines = lines
+    .filter((l) => mode === "all" || l.mode === mode)
+    .map((l) => ({ ...l, status: serviceFor(l, reports, now).status }));
+  const journeys = query
+    ? planJourneys(availableLines, query.from, query.to)
+    : [];
+  const suggestions = [
+    {
+      from: "marine",
+      to: "marsa",
+      label: "Tunis Marine → La Marsa",
+      mode: "TGM",
+    },
+    {
+      from: "barcelone",
+      to: "mourouj4",
+      label: "Barcelone → El Mourouj 4",
+      mode: "M6",
+    },
+    {
+      from: "republique",
+      to: "benarous",
+      label: "République → Ben Arous",
+      mode: "Correspondance",
+    },
+  ];
   return (
     <div className="journeys-layout">
       <section className="card planner-form">
@@ -44,6 +74,32 @@ export default function Journeys({
         <p>
           Comparez les trajets du réseau et choisissez celui qui vous convient.
         </p>
+        <div
+          className="planner-mode-tabs network-mode-tabs"
+          role="group"
+          aria-label="Modes du trajet"
+        >
+          {(["all", "bus", "metro", "tgm"] as const).map((value) => (
+            <button
+              key={value}
+              aria-pressed={mode === value}
+              className={mode === value ? "active" : ""}
+              onClick={() => {
+                setMode(value);
+                setChosen(null);
+              }}
+            >
+              {value === "all" ? (
+                "Tous"
+              ) : (
+                <>
+                  <ModeIcon mode={value} size={13} />
+                  {modeLabels[value]}
+                </>
+              )}
+            </button>
+          ))}
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -104,8 +160,9 @@ export default function Journeys({
           </button>
         </form>
         <div className="info-note">
-          Trajets et durées simulés. Seul le sens affiché de chaque ligne est
-          couvert. Les durées ne tiennent pas compte du trafic réel.
+          Trajets et durées simulés, hors trafic réel. Métro et TGM sont
+          couverts dans les deux sens. Les lignes interrompues sont exclues ; un
+          retard ajoute 6 min fictives.
         </div>
       </section>
       <section className="journey-results">
@@ -137,6 +194,24 @@ export default function Journeys({
               Une ligne directe ou une correspondance : commencez par choisir
               vos deux arrêts.
             </p>
+            <div className="journey-suggestions" aria-label="Idées de trajets">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion.to}
+                  onClick={() => {
+                    setFrom(suggestion.from);
+                    setTo(suggestion.to);
+                    setMode("all");
+                    setQuery({ from: suggestion.from, to: suggestion.to });
+                    setChosen(null);
+                  }}
+                >
+                  <span>{suggestion.mode}</span>
+                  {suggestion.label}
+                  <ArrowRight size={14} />
+                </button>
+              ))}
+            </div>
             <div className="intro-features">
               <span>
                 <Clock3 size={17} /> Durées indicatives
@@ -160,7 +235,7 @@ export default function Journeys({
               text={
                 query.from === query.to
                   ? "Choisissez deux arrêts différents."
-                  : "Aucune liaison dans ce sens sur notre réseau de démonstration. Essayez Place Barcelone → Ariana Centre."
+                  : "Aucune liaison disponible avec ces modes et statuts. Essayez Tous les modes ou Tunis Marine → La Marsa Plage."
               }
             />
           </div>
@@ -187,6 +262,7 @@ export default function Journeys({
                   <Chevron />
                   {journey.lines.map((line, i) => (
                     <span key={line.id} className="inline-route">
+                      <ModeIcon mode={line.mode} size={16} />
                       <LineBadge line={line} />
                       {i < journey.lines.length - 1 && <Chevron />}
                     </span>
@@ -202,6 +278,13 @@ export default function Journeys({
                 <p>
                   {stopById(query.from).name} → {stopById(query.to).name}
                 </p>
+                <div className="journey-service-status">
+                  {journey.lines.map((line) => (
+                    <span key={line.id}>
+                      {line.id} <StatusBadge status={line.status} />
+                    </span>
+                  ))}
+                </div>
                 {affected.length > 0 && (
                   <div className="inline-warning">
                     <TriangleAlert size={15} /> {affected.length} signalement
@@ -235,7 +318,11 @@ export default function Journeys({
                         <button
                           className="text-button"
                           onClick={() =>
-                            onFollow(segment.line.id, segment.from)
+                            onFollow(
+                              segment.line.id,
+                              segment.from,
+                              segment.direction,
+                            )
                           }
                         >
                           Suivre la ligne <ArrowRight size={15} />

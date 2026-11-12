@@ -21,12 +21,16 @@ import {
 import {
   activeReports,
   isFresh,
+  modeLabels,
+  serviceFor,
   stops,
+  type Mode,
+  type ServiceStatus,
   type Line,
   type Vehicle,
   type Report,
 } from "../data";
-import { Empty, LineBadge, Modal } from "./UI";
+import { Empty, LineBadge, Modal, ModeIcon, StatusBadge } from "./UI";
 type Props = {
   lines: Line[];
   setLines: Dispatch<SetStateAction<Line[]>>;
@@ -42,6 +46,7 @@ export function Driver({
   vehicles,
   setVehicles,
   setReports,
+  reports,
   now,
   toast,
 }: Props) {
@@ -50,6 +55,9 @@ export function Driver({
   const [breakdown, setBreakdown] = useState(false);
   const vehicle = vehicles.find((v) => v.id === vehicleId);
   const line = lines.find((l) => l.id === vehicle?.lineId);
+  const suspended = line
+    ? serviceFor(line, reports, now).status === "suspended"
+    : false;
   return (
     <div className="driver-layout">
       <section className="card driver-console">
@@ -97,14 +105,17 @@ export function Driver({
                 className={`status-dot ${vehicle?.running ? "" : "paused"}`}
               />
               <strong>
-                {vehicle?.running
-                  ? "Simulation en cours"
-                  : "Envoi des positions arrêté"}
+                {suspended
+                  ? "Service interrompu · simulation arrêtée"
+                  : vehicle?.running
+                    ? "Simulation en cours"
+                    : "Envoi des positions arrêté"}
               </strong>
               <span>Connexion locale</span>
             </div>
             <div className="driver-buttons">
               <button
+                disabled={suspended && !vehicle?.running}
                 className={
                   vehicle?.running ? "secondary-button" : "primary-button"
                 }
@@ -166,7 +177,7 @@ export function Driver({
         {vehicle && line ? (
           <>
             <div className="telemetry-vehicle">
-              <BusFront size={45} />
+              <ModeIcon mode={line.mode} size={45} />
               <div>
                 <strong>{vehicle.id}</strong>
                 <p>
@@ -175,6 +186,27 @@ export function Driver({
               </div>
             </div>
             <dl className="telemetry-list">
+              <div>
+                <dt>Sens de circulation</dt>
+                <dd>
+                  Vers{" "}
+                  {
+                    stops.find(
+                      (s) =>
+                        s.id ===
+                        (vehicle.direction === 1
+                          ? line.stops.at(-1)
+                          : line.stops[0]),
+                    )?.name
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Service (démo)</dt>
+                <dd>
+                  <StatusBadge status={serviceFor(line, reports, now).status} />
+                </dd>
+              </div>
               <div>
                 <dt>Source de position</dt>
                 <dd>Simulée</dd>
@@ -212,7 +244,9 @@ export function Driver({
                         s.id ===
                         line.stops[
                           Math.min(
-                            Math.ceil(vehicle.progress),
+                            vehicle.direction === 1
+                              ? Math.ceil(vehicle.progress)
+                              : Math.floor(vehicle.progress),
                             line.stops.length - 1,
                           )
                         ],
@@ -258,7 +292,10 @@ export function Driver({
                   {
                     id: crypto.randomUUID(),
                     lineId: vehicle.lineId,
-                    type: "Bus en panne",
+                    type:
+                      line?.mode === "bus"
+                        ? "Bus en panne"
+                        : "Véhicule en panne",
                     description: `Panne déclarée depuis le simulateur conducteur (${vehicle.id}).`,
                     createdAt: Date.now(),
                     status: "pending",
@@ -483,6 +520,11 @@ export function Admin(p: Props) {
                     id: "",
                     name: "",
                     color: "#245be0",
+                    mode: "bus",
+                    status: "normal",
+                    statusNote:
+                      "Service régulier dans ce scénario de démonstration.",
+                    bidirectional: false,
                     stops: ["barcelone", "ariana"],
                     frequency: 15,
                     start: "06:00",
@@ -499,12 +541,15 @@ export function Admin(p: Props) {
                 <div>
                   <h3>{line.name}</h3>
                   <p>
-                    {line.stops.length} arrêts ·{" "}
+                    {modeLabels[line.mode]} · {line.stops.length} arrêts ·{" "}
                     {line.frequency
                       ? `Toutes les ${line.frequency} min`
                       : "Horaires indisponibles"}
                   </p>
                 </div>
+                <StatusBadge
+                  status={serviceFor(line, p.reports, p.now).status}
+                />
                 <button
                   className="icon-button"
                   aria-label={`Modifier la ligne ${line.id}`}
@@ -545,7 +590,10 @@ export function Admin(p: Props) {
             {p.vehicles.map((v) => (
               <div className="network-row" key={v.id}>
                 <span className="soft-icon">
-                  <BusFront size={20} />
+                  <ModeIcon
+                    mode={p.lines.find((l) => l.id === v.lineId)!.mode}
+                    size={20}
+                  />
                 </span>
                 <div>
                   <h3>{v.id}</h3>
@@ -558,6 +606,14 @@ export function Admin(p: Props) {
                 </div>
                 <button
                   className="secondary-button"
+                  disabled={
+                    !v.running &&
+                    serviceFor(
+                      p.lines.find((l) => l.id === v.lineId)!,
+                      p.reports,
+                      p.now,
+                    ).status === "suspended"
+                  }
                   onClick={() =>
                     p.setVehicles((vs) =>
                       vs.map((item) =>
@@ -612,6 +668,8 @@ export function Admin(p: Props) {
                   ? {
                       ...v,
                       lineId: line.id,
+                      direction: line.bidirectional ? v.direction : 1,
+                      running: line.status === "suspended" ? false : v.running,
                       progress: Math.min(v.progress, line.stops.length - 1),
                     }
                   : v,
@@ -642,6 +700,7 @@ export function Admin(p: Props) {
                 {
                   id,
                   lineId: newVehicleLine,
+                  direction: 1,
                   progress: 0,
                   updatedAt: Date.now(),
                   running: false,
@@ -816,6 +875,65 @@ function LineEditor({
             />
           </div>
         </div>
+        <div className="form-grid">
+          <div>
+            <label className="field-label" htmlFor="line-mode">
+              Mode de transport
+            </label>
+            <select
+              id="line-mode"
+              value={draft.mode}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  mode: e.target.value as Mode,
+                  bidirectional: e.target.value !== "bus",
+                })
+              }
+            >
+              <option value="bus">Bus</option>
+              <option value="metro">Métro</option>
+              <option value="tgm">TGM</option>
+            </select>
+          </div>
+          <div>
+            <label className="field-label" htmlFor="line-status">
+              Statut du service
+            </label>
+            <select
+              id="line-status"
+              value={draft.status}
+              onChange={(e) =>
+                setDraft({ ...draft, status: e.target.value as ServiceStatus })
+              }
+            >
+              <option value="normal">Service normal</option>
+              <option value="delayed">Perturbé</option>
+              <option value="suspended">Interrompu</option>
+            </select>
+          </div>
+        </div>
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={draft.bidirectional}
+            onChange={(e) =>
+              setDraft({ ...draft, bidirectional: e.target.checked })
+            }
+          />
+          Service dans les deux sens
+        </label>
+        <label className="field-label" htmlFor="line-status-note">
+          Message du statut (démo)
+        </label>
+        <textarea
+          id="line-status-note"
+          rows={2}
+          required
+          maxLength={300}
+          value={draft.statusNote}
+          onChange={(e) => setDraft({ ...draft, statusNote: e.target.value })}
+        />
         <label className="field-label" htmlFor="line-name">
           Nom du parcours
         </label>

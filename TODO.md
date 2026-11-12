@@ -12,6 +12,16 @@ Frontend prototype based on `jet l car __.pdf`. React + TypeScript, Vite, Node +
 - [x] 4. Build simulated driver controls and demo-gated administration (network management and moderation).
 - [x] 5. Polish responsive layouts, keyboard access, empty/error states; run typecheck, build and browser interaction tests.
 
+## Multimodal network expansion
+
+- [x] Add métro M1–M6, TGM, more bus routes and representative station sequences from the supplied references. Keep geography approximate and every operational value mocked.
+- [x] Add transport modes, service statuses and bidirectional rail journeys without conflating bus 2 with métro M2.
+- [x] Upgrade map to network/line views, matching mode/status/search filters, clickable routes, interchange markers, optional stations/vehicles, and expanded view.
+- [x] Update arrival, journey, alerts and administration screens for métro/TGM and service availability.
+- [x] Migrate existing local demo data safely, add regression tests, inspect desktop/mobile views, then commit and push.
+
+Design extension: keep the current paper/slate/blue system and typography. Add compact mode tabs and explicit status chips; shared station rings are the map’s signature. Fit the network only in network view; fit and emphasize one route in line view. Bound the route list so adding lines cannot stretch the map indefinitely.
+
 ## Design plan
 
 - Palette: paper #FFFFFF, canvas #F5F7FA, ink #182A3B, muted #5D6E82 (darkened after contrast review), transit blue #245BE0, signal green #218568.
@@ -31,8 +41,8 @@ Frontend prototype based on `jet l car __.pdf`. React + TypeScript, Vite, Node +
 ## Verification completed
 
 - TypeScript + Vite production build passes.
-- 6 transport-rule unit tests pass.
-- 9 Playwright browser tests pass, including axe checks on five main screens.
+- 16 unit tests pass, covering transport rules, filtering, direction coverage, suspended services and legacy-storage migration.
+- 16 Playwright browser tests pass, including axe checks on five main screens, a mobile rail screen and the expanded map.
 - Desktop and 390px mobile screenshots reviewed; no horizontal overflow on main mobile screens.
 - Replaced the original tile provider after visual review revealed API-key-required tiles. OpenStreetMap now works without a key.
 - Fastify smoke checks: home 200, SPA fallback 200, nonexistent transport API 404.
@@ -41,5 +51,8 @@ Frontend prototype based on `jet l car __.pdf`. React + TypeScript, Vite, Node +
 ## Deliberate prototype boundaries
 
 - Administration configures served stops from a fixed mock catalogue; new geographic stop creation is not implemented.
-- No real authentication, real GPS, transport API, database, reverse-direction routing, or phone notifications.
+- No real authentication, real GPS, transport API, database, journeys requiring more than one transfer, or phone notifications.
+- Métro/TGM support both directions. The catalogue contains 14 lines and 90 representative stops, with approximate geometry rather than official GTFS coverage.
+- Mock service statuses are distinct from GPS freshness. A suspended line is excluded from arrivals, journey planning and position updates.
+- Reference artwork is not bundled; reference credits and limitations are recorded in README.md.
 - Map tiles and optional web fonts use external Internet resources. All application transport state is local mock data.

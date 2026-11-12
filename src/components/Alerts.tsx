@@ -9,11 +9,13 @@ import {
 import {
   activeReports,
   arrivalMinutes,
+  modeLabels,
+  serviceFor,
   type Line,
   type Report,
   type Vehicle,
 } from "../data";
-import { Empty, LineBadge } from "./UI";
+import { Empty, LineBadge, StatusBadge } from "./UI";
 export default function Alerts({
   lines,
   reports,
@@ -42,6 +44,34 @@ export default function Alerts({
           <button className="secondary-button" onClick={onReport}>
             <Flag size={16} /> Signaler
           </button>
+        </div>
+        <div className="service-watch card">
+          <h2>État des services · démo</h2>
+          <p>Scénarios simulés, indépendants de la fraîcheur GPS.</p>
+          {lines
+            .filter(
+              (line) => serviceFor(line, reports, now).status !== "normal",
+            )
+            .map((line) => {
+              const service = serviceFor(line, reports, now);
+              return (
+                <button key={line.id} onClick={() => onLine(line.id)}>
+                  <LineBadge line={line} small />
+                  <span>
+                    <strong>
+                      {modeLabels[line.mode]} {line.id}
+                    </strong>
+                    <small>{service.note}</small>
+                  </span>
+                  <StatusBadge status={service.status} />
+                </button>
+              );
+            })}
+          {lines.every(
+            (line) => serviceFor(line, reports, now).status === "normal",
+          ) && (
+            <p>Toutes les lignes sont en service normal dans ce scénario.</p>
+          )}
         </div>
         {active.length === 0 && (
           <div className="card">
@@ -121,7 +151,10 @@ export default function Alerts({
             (v) =>
               v.lineId === line.id &&
               line.stops.some((_, index) => {
-                const eta = arrivalMinutes(v, index, now);
+                const eta = arrivalMinutes(v, index, now, {
+                  ...line,
+                  status: serviceFor(line, reports, now).status,
+                });
                 return eta !== null && eta <= 3;
               }),
           );
@@ -132,7 +165,7 @@ export default function Alerts({
                 <strong>{line.name.split(" → ")[1]}</strong>
                 <small>
                   {enabled && near
-                    ? "Un bus approche d’un arrêt (simulation)"
+                    ? "Un véhicule approche d’un arrêt (simulation)"
                     : enabled
                       ? "Alerte d’approche activée"
                       : "Alerte désactivée"}

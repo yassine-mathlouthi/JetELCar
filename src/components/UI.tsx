@@ -1,6 +1,48 @@
 import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
-import { X, Users, SearchX } from "lucide-react";
-import { crowdLabels, type Crowd, type Line } from "../data";
+import {
+  X,
+  Users,
+  SearchX,
+  BusFront,
+  TramFront,
+  TrainFront,
+  Check,
+  Clock3,
+  Ban,
+} from "lucide-react";
+import {
+  crowdLabels,
+  modeLabels,
+  statusLabels,
+  type Crowd,
+  type Line,
+  type Mode,
+  type ServiceStatus,
+} from "../data";
+
+export function ModeIcon({ mode, size = 16 }: { mode: Mode; size?: number }) {
+  const Icon =
+    mode === "metro" ? TramFront : mode === "tgm" ? TrainFront : BusFront;
+  return <Icon size={size} aria-hidden="true" />;
+}
+export function ModeBadge({ mode }: { mode: Mode }) {
+  return (
+    <span className={`mode-badge ${mode}`}>
+      <ModeIcon mode={mode} size={13} />
+      {modeLabels[mode]}
+    </span>
+  );
+}
+export function StatusBadge({ status }: { status: ServiceStatus }) {
+  const Icon =
+    status === "normal" ? Check : status === "delayed" ? Clock3 : Ban;
+  return (
+    <span className={`service-badge ${status}`}>
+      <Icon size={12} />
+      {statusLabels[status]}
+    </span>
+  );
+}
 export function LineBadge({
   line,
   small = false,
@@ -12,6 +54,7 @@ export function LineBadge({
     <span
       className={`line-badge ${small ? "small" : ""}`}
       style={{ "--line-color": line.color } as CSSProperties}
+      title={`${modeLabels[line.mode]} ${line.id}`}
     >
       {line.id}
     </span>

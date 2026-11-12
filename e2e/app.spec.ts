@@ -77,15 +77,17 @@ test("planner supports direct routes, transfers and uncovered journeys", async (
   await page.getByLabel("Départ", { exact: true }).selectOption("marine");
   await page.getByRole("button", { name: "Rechercher un trajet" }).click();
   await expect(
-    page.getByRole("heading", {
-      name: "Correspondance à Place de la République",
-    }),
+    page
+      .getByRole("heading", {
+        name: "Correspondance à Place de la République",
+      })
+      .first(),
   ).toBeVisible();
   await page.getByRole("button", { name: "Voir les étapes" }).first().click();
   await page.getByRole("button", { name: "Suivre la ligne" }).first().click();
   await expect(page.locator("#stop-select")).toHaveValue("marine");
   await page.goto("/#journeys");
-  await page.getByLabel("Départ", { exact: true }).selectOption("ariana");
+  await page.getByLabel("Départ", { exact: true }).selectOption("intilaka");
   await page
     .getByLabel("Destination", { exact: true })
     .selectOption("barcelone");
@@ -100,7 +102,7 @@ test("crowd submissions and in-app subscriptions work", async ({ page }) => {
   await page
     .getByRole("button", { name: "Déclarer l’affluence", exact: true })
     .click();
-  await page.getByText("Bus saturé", { exact: true }).click();
+  await page.getByText("Véhicule saturé", { exact: true }).click();
   await page.getByRole("button", { name: "Partager l’affluence" }).click();
   await expect(page.getByRole("status").last()).toContainText(
     "Affluence enregistrée",
@@ -197,11 +199,11 @@ test("map controls, approach alerts and reset work without page errors", async (
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  const layerToggle = page
-    .getByRole("region", { name: "Carte du réseau de Tunis" })
-    .getByRole("button", { name: "Toutes les lignes", exact: true });
-  await layerToggle.click();
-  await expect(layerToggle).toHaveAttribute("aria-pressed", "false");
+  const lineView = page
+    .getByRole("group", { name: "Vue de la carte" })
+    .getByRole("button", { name: "Ma ligne", exact: true });
+  await lineView.click();
+  await expect(lineView).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Zoom avant" }).click();
   await page.getByRole("button", { name: "Zoom arrière" }).click();
   await page.getByRole("button", { name: "Recentrer sur la ligne" }).click();

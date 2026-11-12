@@ -20,7 +20,10 @@ import {
 } from "lucide-react";
 import {
   activeReports,
+  advanceVehicle,
   arrivalMinutes,
+  serviceFor,
+  type Direction,
   createReports,
   createVehicles,
   crowdLabels,
@@ -38,6 +41,7 @@ import Alerts from "./components/Alerts";
 import { Admin, Driver } from "./components/Operations";
 import { Modal } from "./components/UI";
 import "./styles.css";
+import "./network.css";
 type Page =
   "network" | "journeys" | "favorites" | "alerts" | "driver" | "admin";
 const pages: Record<Page, { title: string; subtitle: string }> = {
@@ -80,11 +84,11 @@ function pageFromHash(): Page {
 export default function App() {
   const [page, setPage] = useState<Page>(pageFromHash);
   const [lines, setLines] = useLocalStorage<Line[]>(
-    "jec-lines-v1",
+    "jec-lines-v2",
     initialLines,
   );
   const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>(
-    "jec-vehicles-v1",
+    "jec-vehicles-v2",
     createVehicles,
   );
   const [reports, setReports] = useLocalStorage<Report[]>(
@@ -100,6 +104,7 @@ export default function App() {
     [],
   );
   const [selectedId, setSelectedId] = useState("2");
+  const [direction, setDirection] = useState<Direction>(1);
   const selected = lines.find((l) => l.id === selectedId) ?? lines[0];
   const [stop, setStop] = useState("passage");
   const stopId = selected.stops.includes(stop)
@@ -145,22 +150,22 @@ export default function App() {
         setVehicles((vs) =>
           vs.map((v) => {
             const line = lines.find((l) => l.id === v.lineId);
-            return v.running && line
-              ? {
-                  ...v,
-                  progress:
-                    v.progress + 0.025 >= line.stops.length - 1
-                      ? 0
-                      : v.progress + 0.025,
-                  updatedAt: Date.now(),
-                }
+            return line
+              ? advanceVehicle(
+                  v,
+                  {
+                    ...line,
+                    status: serviceFor(line, reports, Date.now()).status,
+                  },
+                  Date.now(),
+                )
               : v;
           }),
         ),
       5000,
     );
     return () => clearInterval(timer);
-  }, [lines, setVehicles]);
+  }, [lines, reports, setVehicles]);
   useEffect(() => () => clearTimeout(toastTimeout.current), []);
   function toast(text: string) {
     setMessage(text);
@@ -174,6 +179,7 @@ export default function App() {
   }
   function selectLine(id: string) {
     setSelectedId(id);
+    setDirection(1);
     const line = lines.find((l) => l.id === id)!;
     setStop(line.stops[Math.min(2, line.stops.length - 1)]);
   }
@@ -251,8 +257,11 @@ export default function App() {
     alertLines.includes(selected.id) &&
     vehicles.some((v) => {
       const eta =
-        v.lineId === selected.id
-          ? arrivalMinutes(v, selected.stops.indexOf(stopId), now)
+        v.lineId === selected.id && v.direction === direction
+          ? arrivalMinutes(v, selected.stops.indexOf(stopId), now, {
+              ...selected,
+              status: serviceFor(selected, reports, now).status,
+            })
           : null;
       return eta !== null && eta <= 3;
     });
@@ -421,8 +430,8 @@ export default function App() {
           )}
           {near && (page === "network" || page === "favorites") && (
             <div className="approach-banner" role="status">
-              <Bell size={17} /> Un bus de la ligne {selected.id} approche de
-              votre arrêt · estimation simulée inférieure à 4 min.
+              <Bell size={17} /> Un véhicule de la ligne {selected.id} approche
+              de votre arrêt · estimation simulée inférieure à 4 min.
             </div>
           )}
           {(page === "network" || page === "favorites") && (
@@ -432,6 +441,8 @@ export default function App() {
               reports={reports}
               now={now}
               selected={selected}
+              direction={selected.bidirectional ? direction : 1}
+              setDirection={setDirection}
               selectLine={selectLine}
               stopId={stopId}
               setStopId={setStop}
@@ -454,8 +465,9 @@ export default function App() {
               lines={lines}
               reports={reports}
               now={now}
-              onFollow={(id, stop) => {
+              onFollow={(id, stop, travelDirection) => {
                 selectLine(id);
+                setDirection(travelDirection);
                 setStop(stop);
                 navigate("network");
               }}
@@ -567,7 +579,10 @@ export default function App() {
         </Modal>
       )}
       {modal === "crowd" && (
-        <Modal title="Comment est votre bus ?" onClose={() => setModal(null)}>
+        <Modal
+          title="Comment est votre véhicule ?"
+          onClose={() => setModal(null)}
+        >
           <p>
             Votre estimation aide les autres voyageurs à préparer leur trajet.
             Véhicule : <strong>{crowdVehicle}</strong>.
@@ -684,6 +699,7 @@ export default function App() {
                 setAlertLines([]);
                 setCrowdVotes({});
                 setSelectedId("2");
+                setDirection(1);
                 setStop("passage");
                 setModal(null);
                 navigate("network");

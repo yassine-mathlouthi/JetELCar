@@ -1,197 +1,39 @@
-export type Stop = { id: string; name: string; lat: number; lng: number };
-export type Crowd = "low" | "medium" | "high" | "unknown";
-export type Line = {
-  id: string;
-  name: string;
-  color: string;
-  stops: string[];
-  frequency: number | null;
-  start: string;
-  end: string;
+import { initialLines, stops } from "./network";
+import type {
+  Crowd,
+  Direction,
+  Line,
+  Mode,
+  Report,
+  ServiceStatus,
+  Vehicle,
+} from "./types";
+export { initialLines, stops } from "./network";
+export type {
+  Stop,
+  Crowd,
+  Direction,
+  Line,
+  Mode,
+  Report,
+  ServiceStatus,
+  Vehicle,
+} from "./types";
+
+export const modeLabels: Record<Mode, string> = {
+  bus: "Bus",
+  metro: "Métro",
+  tgm: "TGM",
 };
-export type Vehicle = {
-  id: string;
-  lineId: string;
-  progress: number;
-  updatedAt: number;
-  crowd: Crowd;
-  contributions: number;
-  crowdAt: number;
-  running: boolean;
+export const statusLabels: Record<ServiceStatus, string> = {
+  normal: "Service normal",
+  delayed: "Perturbé",
+  suspended: "Interrompu",
 };
-export type Report = {
-  id: string;
-  lineId: string;
-  type: string;
-  description: string;
-  createdAt: number;
-  status: "pending" | "verified" | "dismissed";
-};
-export const stops: Stop[] = [
-  { id: "barcelone", name: "Place Barcelone", lat: 36.7946, lng: 10.1802 },
-  {
-    id: "republique",
-    name: "Place de la République",
-    lat: 36.8065,
-    lng: 10.1818,
-  },
-  { id: "passage", name: "Le Passage", lat: 36.8095, lng: 10.1801 },
-  { id: "belvedere", name: "Belvédère", lat: 36.8236, lng: 10.1776 },
-  { id: "menzah", name: "El Menzah 1", lat: 36.8374, lng: 10.1812 },
-  { id: "ariana", name: "Ariana Centre", lat: 36.8602, lng: 10.1934 },
-  { id: "marine", name: "Tunis Marine", lat: 36.8001, lng: 10.1916 },
-  { id: "mohamedv", name: "Avenue Mohamed V", lat: 36.817, lng: 10.1846 },
-  { id: "charguia", name: "La Charguia", lat: 36.8397, lng: 10.2068 },
-  { id: "lac", name: "Les Berges du Lac", lat: 36.8373, lng: 10.2357 },
-  { id: "bardo", name: "Le Bardo", lat: 36.8092, lng: 10.1406 },
-  { id: "babsaadoun", name: "Bab Saadoun", lat: 36.8093, lng: 10.1605 },
-  { id: "manar", name: "El Manar", lat: 36.8421, lng: 10.155 },
-  { id: "manouba", name: "La Manouba", lat: 36.8083, lng: 10.0985 },
-];
-export const initialLines: Line[] = [
-  {
-    id: "2",
-    name: "Tunis Centre → Ariana",
-    color: "#245be0",
-    stops: [
-      "barcelone",
-      "republique",
-      "passage",
-      "belvedere",
-      "menzah",
-      "ariana",
-    ],
-    frequency: 15,
-    start: "05:30",
-    end: "22:00",
-  },
-  {
-    id: "20",
-    name: "Tunis Marine → Le Lac",
-    color: "#207b69",
-    stops: ["marine", "republique", "mohamedv", "charguia", "lac"],
-    frequency: 20,
-    start: "05:45",
-    end: "21:30",
-  },
-  {
-    id: "32",
-    name: "Le Passage → El Manar",
-    color: "#8c60b8",
-    stops: ["passage", "babsaadoun", "bardo", "manar"],
-    frequency: 25,
-    start: "06:00",
-    end: "21:00",
-  },
-  {
-    id: "47",
-    name: "Place Barcelone → La Manouba",
-    color: "#a25e23",
-    stops: ["barcelone", "passage", "babsaadoun", "bardo", "manouba"],
-    frequency: null,
-    start: "06:00",
-    end: "20:30",
-  },
-];
-export function createVehicles(): Vehicle[] {
-  const now = Date.now();
-  return [
-    {
-      id: "BUS-201",
-      lineId: "2",
-      progress: 0.55,
-      updatedAt: now,
-      crowd: "low",
-      contributions: 8,
-      crowdAt: now,
-      running: true,
-    },
-    {
-      id: "BUS-202",
-      lineId: "2",
-      progress: 2.35,
-      updatedAt: now,
-      crowd: "medium",
-      contributions: 5,
-      crowdAt: now,
-      running: true,
-    },
-    {
-      id: "BUS-203",
-      lineId: "2",
-      progress: 4.4,
-      updatedAt: now,
-      crowd: "low",
-      contributions: 3,
-      crowdAt: now,
-      running: true,
-    },
-    {
-      id: "BUS-2001",
-      lineId: "20",
-      progress: 1.4,
-      updatedAt: now,
-      crowd: "medium",
-      contributions: 4,
-      crowdAt: now,
-      running: true,
-    },
-    {
-      id: "BUS-3201",
-      lineId: "32",
-      progress: 1.2,
-      updatedAt: now - 180_000,
-      crowd: "unknown",
-      contributions: 1,
-      crowdAt: now,
-      running: false,
-    },
-    {
-      id: "BUS-4701",
-      lineId: "47",
-      progress: 2.6,
-      updatedAt: now,
-      crowd: "high",
-      contributions: 6,
-      crowdAt: now,
-      running: true,
-    },
-  ];
-}
-export function createReports(): Report[] {
-  return [
-    {
-      id: "r1",
-      lineId: "32",
-      type: "Bus en panne",
-      description:
-        "Un véhicule immobilisé à proximité de Bab Saadoun. Prévoyez un autre trajet.",
-      createdAt: Date.now() - 8 * 60_000,
-      status: "verified",
-    },
-    {
-      id: "r2",
-      lineId: "47",
-      type: "Bus saturé",
-      description: "Forte affluence en direction de La Manouba.",
-      createdAt: Date.now() - 4 * 60_000,
-      status: "pending",
-    },
-  ];
-}
-export const crowdLabels: Record<Crowd, string> = {
-  low: "Places disponibles",
-  medium: "Affluence modérée",
-  high: "Bus saturé",
-  unknown: "Affluence inconnue",
-};
-export const reportTypes = [
-  "Bus en retard",
-  "Bus en panne",
-  "Trajet interrompu",
-  "Bus saturé",
-  "Autre",
-];
+export const directionStops = (line: Line, direction: Direction) =>
+  direction === -1 ? [...line.stops].reverse() : line.stops;
+export const segmentMinutes = (line: Line) =>
+  line.mode === "metro" ? 2 : line.mode === "tgm" ? 3 : 4;
 export const stopById = (id: string) => stops.find((s) => s.id === id)!;
 export const isFresh = (vehicle: Vehicle, now: number) =>
   now - vehicle.updatedAt <= 120_000;
@@ -199,6 +41,209 @@ export const activeReports = (reports: Report[], now: number) =>
   reports.filter(
     (r) => r.status !== "dismissed" && now - r.createdAt < 3_600_000,
   );
+
+export function serviceFor(
+  line: Line,
+  reports: Report[],
+  now: number,
+): { status: ServiceStatus; note: string } {
+  const verified = activeReports(reports, now).filter(
+    (r) => r.lineId === line.id && r.status === "verified",
+  );
+  const interruption = verified.find((r) => r.type === "Trajet interrompu");
+  if (interruption)
+    return {
+      status: "suspended",
+      note:
+        interruption.description || "Interruption confirmée en démonstration.",
+    };
+  const delay = verified.find((r) => /panne|retard/i.test(r.type));
+  if (line.status === "normal" && delay)
+    return {
+      status: "delayed",
+      note: delay.description || "Circulation perturbée dans ce scénario.",
+    };
+  return { status: line.status, note: line.statusNote };
+}
+
+export type NetworkFilters = {
+  mode: Mode | "all";
+  status: ServiceStatus | "all";
+  gpsOnly: boolean;
+  search: string;
+};
+export const defaultFilters: NetworkFilters = {
+  mode: "all",
+  status: "all",
+  gpsOnly: false,
+  search: "",
+};
+export const normalizeSearch = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("fr")
+    .trim();
+export function filterLines(
+  lines: Line[],
+  vehicles: Vehicle[],
+  reports: Report[],
+  now: number,
+  filters: NetworkFilters,
+): Line[] {
+  const query = normalizeSearch(filters.search);
+  return lines.filter(
+    (line) =>
+      (filters.mode === "all" || line.mode === filters.mode) &&
+      (filters.status === "all" ||
+        serviceFor(line, reports, now).status === filters.status) &&
+      (!filters.gpsOnly ||
+        vehicles.some((v) => v.lineId === line.id && isFresh(v, now))) &&
+      normalizeSearch(
+        `${line.id} ${modeLabels[line.mode]} ${line.name} ${line.stops.map((id) => stopById(id).name).join(" ")}`,
+      ).includes(query),
+  );
+}
+export function interchangeLines(lines: Line[], stopId: string) {
+  return lines.filter((l) => l.stops.includes(stopId));
+}
+
+export function createVehicles(): Vehicle[] {
+  const now = Date.now();
+  const vehicle = (
+    id: string,
+    lineId: string,
+    progress: number,
+    crowd: Crowd,
+    contributions: number,
+    direction: Direction = 1,
+    running = true,
+  ): Vehicle => ({
+    id,
+    lineId,
+    progress,
+    direction,
+    crowd,
+    contributions,
+    running,
+    updatedAt: running ? now : now - 180_000,
+    crowdAt: now,
+  });
+  return [
+    vehicle("BUS-201", "2", 0.55, "low", 8),
+    vehicle("BUS-202", "2", 2.35, "medium", 5),
+    vehicle("BUS-203", "2", 4.4, "low", 3),
+    vehicle("BUS-2001", "20", 1.4, "medium", 4),
+    vehicle("BUS-3201", "32", 1.2, "unknown", 1, 1, false),
+    vehicle("BUS-4701", "47", 2.6, "high", 6),
+    ...initialLines
+      .filter((l) => !["2", "20", "32", "47"].includes(l.id))
+      .flatMap((line) => {
+        const prefix =
+          line.mode === "bus" ? "BUS" : line.mode === "metro" ? "METRO" : "TGM";
+        const running = line.status !== "suspended";
+        const vehicles = [
+          vehicle(
+            `${prefix}-${line.id}-01`,
+            line.id,
+            0.6,
+            line.id === "M4" ? "high" : "low",
+            6,
+            1,
+            running,
+          ),
+        ];
+        if (line.bidirectional)
+          vehicles.push(
+            vehicle(
+              `${prefix}-${line.id}-02`,
+              line.id,
+              line.stops.length - 1.65,
+              "medium",
+              4,
+              -1,
+              running,
+            ),
+          );
+        return vehicles;
+      }),
+  ];
+}
+export function advanceVehicle(
+  vehicle: Vehicle,
+  line: Line,
+  now: number,
+): Vehicle {
+  if (!vehicle.running || line.status === "suspended") return vehicle;
+  const delta = 0.025 * (4 / segmentMinutes(line));
+  const next = vehicle.progress + delta * vehicle.direction;
+  if (next >= line.stops.length - 1 || next <= 0) {
+    return {
+      ...vehicle,
+      progress: line.bidirectional
+        ? Math.max(0, Math.min(next, line.stops.length - 1))
+        : 0,
+      direction: line.bidirectional ? (vehicle.direction === 1 ? -1 : 1) : 1,
+      updatedAt: now,
+    };
+  }
+  return { ...vehicle, progress: next, updatedAt: now };
+}
+export function createReports(): Report[] {
+  const now = Date.now();
+  return [
+    {
+      id: "r1",
+      lineId: "32",
+      type: "Bus en panne",
+      description:
+        "Un véhicule immobilisé à proximité de Bab Saadoun. Prévoyez un autre trajet.",
+      createdAt: now - 8 * 60_000,
+      status: "verified",
+    },
+    {
+      id: "r2",
+      lineId: "47",
+      type: "Bus saturé",
+      description: "Forte affluence en direction de La Manouba.",
+      createdAt: now - 4 * 60_000,
+      status: "pending",
+    },
+    {
+      id: "r3",
+      lineId: "M4",
+      type: "Véhicule en retard",
+      description: "Scénario démo : circulation ralentie à proximité du Bardo.",
+      createdAt: now - 6 * 60_000,
+      status: "verified",
+    },
+    {
+      id: "r4",
+      lineId: "M5",
+      type: "Trajet interrompu",
+      description:
+        "Scénario démo : service M5 interrompu. M3 dessert le tronçon commun jusqu’aux Jasmins.",
+      createdAt: now - 3 * 60_000,
+      status: "verified",
+    },
+  ];
+}
+export const crowdLabels: Record<Crowd, string> = {
+  low: "Places disponibles",
+  medium: "Affluence modérée",
+  high: "Véhicule saturé",
+  unknown: "Affluence inconnue",
+};
+export const reportTypes = [
+  "Bus en retard",
+  "Bus en panne",
+  "Véhicule en retard",
+  "Véhicule en panne",
+  "Trajet interrompu",
+  "Bus saturé",
+  "Véhicule saturé",
+  "Autre",
+];
 export function crowdLevel(vehicle: Vehicle, now: number): Crowd {
   return vehicle.contributions >= 2 && now - vehicle.crowdAt < 900_000
     ? vehicle.crowd
@@ -220,15 +265,22 @@ export function arrivalMinutes(
   vehicle: Vehicle,
   stopIndex: number,
   now: number,
+  line?: Line,
 ): number | null {
-  if (!isFresh(vehicle, now) || vehicle.progress > stopIndex) return null;
-  return Math.max(1, Math.ceil((stopIndex - vehicle.progress) * 4));
+  if (!isFresh(vehicle, now) || stopIndex < 0 || line?.status === "suspended")
+    return null;
+  const distance = (stopIndex - vehicle.progress) * vehicle.direction;
+  if (distance < 0) return null;
+  return (
+    Math.max(1, Math.ceil(distance * (line ? segmentMinutes(line) : 4))) +
+    (line?.status === "delayed" ? 6 : 0)
+  );
 }
 export type Journey = {
   lines: Line[];
   transfer?: string;
   minutes: number;
-  segments: { line: Line; from: string; to: string }[];
+  segments: { line: Line; from: string; to: string; direction: Direction }[];
 };
 export function planJourneys(
   lines: Line[],
@@ -236,45 +288,62 @@ export function planJourneys(
   to: string,
 ): Journey[] {
   if (from === to) return [];
+  const available = lines.filter((l) => l.status !== "suspended");
   const result: Journey[] = [];
-  for (const line of lines) {
-    const a = line.stops.indexOf(from),
-      b = line.stops.indexOf(to);
-    if (a >= 0 && b > a)
+  const canRide = (line: Line, a: string, b: string) => {
+    const i = line.stops.indexOf(a),
+      j = line.stops.indexOf(b);
+    return i >= 0 && j >= 0 && i !== j && (j > i || line.bidirectional);
+  };
+  const segment = (
+    line: Line,
+    a: string,
+    b: string,
+  ): Journey["segments"][number] => ({
+    line,
+    from: a,
+    to: b,
+    direction: line.stops.indexOf(b) > line.stops.indexOf(a) ? 1 : -1,
+  });
+  const duration = (line: Line, a: string, b: string) =>
+    Math.abs(line.stops.indexOf(b) - line.stops.indexOf(a)) *
+      segmentMinutes(line) +
+    (line.status === "delayed" ? 6 : 0);
+  for (const line of available) {
+    if (canRide(line, from, to))
       result.push({
         lines: [line],
-        minutes: (b - a) * 4 + 3,
-        segments: [{ line, from, to }],
+        minutes: duration(line, from, to) + 3,
+        segments: [segment(line, from, to)],
       });
   }
-  for (const first of lines.filter((l) => l.stops.includes(from))) {
-    for (const second of lines.filter(
+  for (const first of available.filter((l) => l.stops.includes(from))) {
+    for (const second of available.filter(
       (l) => l.id !== first.id && l.stops.includes(to),
     )) {
-      for (const transfer of first.stops) {
-        if (
-          first.stops.indexOf(transfer) > first.stops.indexOf(from) &&
-          second.stops.includes(transfer) &&
-          second.stops.indexOf(to) > second.stops.indexOf(transfer)
-        ) {
-          result.push({
-            lines: [first, second],
-            transfer,
-            minutes:
-              (first.stops.indexOf(transfer) -
-                first.stops.indexOf(from) +
-                second.stops.indexOf(to) -
-                second.stops.indexOf(transfer)) *
-                4 +
-              8,
-            segments: [
-              { line: first, from, to: transfer },
-              { line: second, from: transfer, to },
-            ],
-          });
-        }
-      }
+      const candidates = first.stops
+        .filter(
+          (transfer) =>
+            canRide(first, from, transfer) && canRide(second, transfer, to),
+        )
+        .map((transfer) => ({
+          lines: [first, second],
+          transfer,
+          minutes:
+            duration(first, from, transfer) +
+            duration(second, transfer, to) +
+            8,
+          segments: [
+            segment(first, from, transfer),
+            segment(second, transfer, to),
+          ],
+        }));
+      // Keep the fastest interchange for a given line pair instead of near-duplicate cards.
+      const best = candidates.sort((a, b) => a.minutes - b.minutes)[0];
+      if (best) result.push(best);
     }
   }
-  return result.sort((a, b) => a.minutes - b.minutes).slice(0, 4);
+  return result
+    .sort((a, b) => a.minutes - b.minutes || a.lines.length - b.lines.length)
+    .slice(0, 6);
 }
