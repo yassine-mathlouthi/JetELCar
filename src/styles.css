@@ -286,9 +286,14 @@ small {
   background: white;
   border-right: 1px solid var(--line);
   padding: 31px 19px 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   z-index: 50;
+}
+.sidebar > * {
+  flex-shrink: 0;
 }
 .brand {
   display: flex;
@@ -2634,6 +2639,26 @@ main {
     margin-left: 0;
   }
 }
+@media (min-width: 761px) and (max-height: 800px) {
+  .sidebar {
+    padding-top: 20px;
+  }
+  .brand {
+    margin-bottom: 24px;
+  }
+  .sidebar-bottom {
+    padding-top: 20px;
+  }
+  .demo-card {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .sidebar-footer {
+    margin-top: 10px;
+    padding-block: 12px;
+  }
+}
+
 @media (max-width: 760px) {
   :root {
     font-size: 14px;
@@ -2641,6 +2666,7 @@ main {
   .sidebar {
     position: relative;
     width: 100%;
+    overflow: visible;
     padding: 15px 18px 0;
     border-right: 0;
     border-bottom: 1px solid var(--line);
