@@ -115,7 +115,11 @@ export default function Journeys({
             <select
               id="journey-from"
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                setQuery(null);
+                setChosen(null);
+              }}
             >
               {stops.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -133,6 +137,7 @@ export default function Journeys({
                 setFrom(to);
                 setTo(from);
                 setQuery(null);
+                setChosen(null);
               }}
             >
               <ArrowDownUp size={17} />
@@ -146,7 +151,11 @@ export default function Journeys({
             <select
               id="journey-to"
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => {
+                setTo(e.target.value);
+                setQuery(null);
+                setChosen(null);
+              }}
             >
               {stops.map((s) => (
                 <option key={s.id} value={s.id}>
