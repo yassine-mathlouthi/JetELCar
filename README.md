@@ -6,6 +6,40 @@ A French-language, responsive frontend prototype for **Smart Transport Tunis**, 
 
 The MVP includes **7 bus routes, métro M1–M6, TGM, and 90 representative stops**. Familiar rail station names are inspired by the supplied Tunis network maps; coordinates and connecting geometry are approximate. Vehicles, service statuses, schedules, reports, crowd levels and journey durations are **mock data only**. This is not a real-time or official transit service.
 
+## Screenshots
+
+A tour of the French-language desktop interface. All service statuses, vehicles, alerts and journey times shown below are simulated.
+
+### Network overview · Vue du réseau
+
+Explore the Grand Tunis network with mode and service-status filters, representative stops and color-coded bus, métro and TGM lines.
+
+![Network overview with line filters and the Grand Tunis transit map](docs/screenshots/network-overview.png)
+
+### Line view · Ma ligne
+
+Focus on an individual route, its stops, simulated vehicles and current demo service status. This example shows métro M4 with a simulated disruption.
+
+![Métro M4 line view with stops, a simulated vehicle and disrupted-service status](docs/screenshots/metro-line.png)
+
+### Journey planner · Mes itinéraires
+
+Compare direct and one-transfer journeys, estimated durations and service information before opening the trip steps.
+
+![Journey planner comparing a direct bus trip and a transfer from Place Barcelone to Ariana Centre](docs/screenshots/journey-planner.png)
+
+### Alerts and service information · Alertes & infos
+
+Review simulated disruptions and passenger reports, and enable approach alerts that appear only inside the application.
+
+![Service disruptions, incident reports and per-line in-app approach alert controls](docs/screenshots/alerts-and-info.png)
+
+### Demo administration · Administration
+
+Monitor simulated vehicles and recent positions, moderate reports, and manage lines, stops and vehicles. This is a browser-local demo, not a secured operations dashboard.
+
+![Demo administration dashboard with network metrics and report moderation controls](docs/screenshots/administration.png)
+
 ## Run locally
 
 Use Node.js **22.12+** (tested with Node 24).
@@ -75,6 +109,7 @@ src/
     Alerts.tsx             Incidents and approach-alert subscriptions
     Operations.tsx         Driver simulator and demo administration
     UI.tsx                 Shared badges, empty states and native dialog
+docs/screenshots/          Desktop screenshots featured in this README
 server/index.ts            Fastify static host
 e2e/app.spec.ts            Original interaction regression tests
 e2e/network.spec.ts        Multimodal network and migration browser tests
